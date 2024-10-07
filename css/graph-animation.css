@@ -1,0 +1,28 @@
+@CHARSET "UTF-8";
+
+#graph-view {
+	display: flex;
+	flex-wrap: wrap;
+}
+.graph-box {
+	box-sizing: border-box;
+	width: 400px;
+	max-width: 95%;
+	margin-right: 10px;
+	margin-bottom: 10px;
+}
+.graph-ctrl {
+	box-sizing: border-box;
+	width: 100%;
+	border-radius: 10px;
+	border: 1px solid #aaa;
+	padding: 10px 10px 25px 10px;
+}
+.easyui-slider {
+	width: 100%;
+}
+.graph-box canvas {
+	box-sizing: border-box;
+	width: 100%;
+	margin-top: 10px;
+}

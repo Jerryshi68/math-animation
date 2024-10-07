@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+  
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0,user-scalable=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <title>
+      Animation of power function, exponential function, logarithmic function
+    </title>
+    <link rel="stylesheet" type="text/css" href="https://www.jeasyui.com/easyui/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="https://www.jeasyui.com/easyui/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="css/graph-animation.css">
+    <script type="text/javascript" src="https://www.jeasyui.com/easyui/jquery.min.js">
+    </script>
+    <script type="text/javascript" src="https://www.jeasyui.com/easyui/jquery.easyui.min.js">
+    </script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+    <script type="text/javascript" src="js/math.js">
+    </script>
+    <script>
+      var figCanvas;
+
+      function initFigCanvas() {
+        /*
+        $('.graph-ctrl').each(function(idx, ele) {
+          this.addEventListener('touchstart', noProcess, false);
+          this.addEventListener('touchmove', noProcess, false);
+          this.addEventListener('touchend', noProcess, false);
+        });*/
+      }
+
+      function noProcess(event) {
+         event.preventDefault();
+        event.stopPropagation();
+      }
+
+      $(function() {
+        initFigCanvas();
+        // Power function
+        $('#power-func-box .easyui-slider').slider({
+          onChange: function(newValue, oldValue) {
+            drawPowerFunction('#power-func-box canvas', newValue);
+          }
+        });
+        $('#power-func-box .easyui-slider').slider('setValue', 20);
+        // Exponential function
+        $('#exponential-func-box .easyui-slider').slider({
+          onChange: function(newValue, oldValue) {
+            var a = 0.1 * Math.pow(10, newValue / 50);
+            drawExponentialFunction('#exponential-func-box canvas', a);
+          }
+        });
+        $('#exponential-func-box .easyui-slider').slider('setValue', 65);
+        // Logarithmic function
+        $('#logarithmic-func-box .easyui-slider').slider({
+          onChange: function(newValue, oldValue) {
+            var a = 0.1 * Math.pow(10, newValue / 50);
+            drawLogarithmicFunction('#logarithmic-func-box canvas', a);
+          }
+        });
+        $('#logarithmic-func-box .easyui-slider').slider('setValue', 65);
+      });
+
+      function drawPowerFunction(figCanvas, a) {
+        var indexList = [ - 5, -4, -3, '-8/3', '-5/2', '-7/3', -2, '-5/3', '-3/2', '-4/3', -1, '-1/2', '-1/3', 0, '1/3', '1/2', 1, '4/3', '3/2', '5/3', 2, '7/3', '5/2', '8/3', 3, 4, 5];
+        var margin = 10;
+        var w = $(figCanvas).get(0).width;
+        var h = $(figCanvas).get(0).height;
+        var xRange = 5;
+        var step = 100;
+        var oX = w / 2;
+        var oY = h / 2;
+        var scale = (w - 2 * margin) / (2 * xRange);
+
+        var index = indexList[a];
+        var numerator;
+        var denominator;
+        if (isNaN(index)) {
+          numerator = parseInt(index);
+          denominator = parseInt(index.substr(index.indexOf('/') + 1));
+        } else {
+          numerator = parseInt(index);
+          denominator = 1;
+        }
+        index = eval(index);
+        var board = $(figCanvas).get(0).getContext('2d');
+        board.lineWidth = 2;
+        if (index == 0) board.strokeStyle = '#F00';
+        else board.strokeStyle = '#000';
+        board.clearRect(0, 0, w, h);
+        board.beginPath();
+        drawAxis(board, w, h, margin, oX, oY);
+        var first = true;
+        var oldX;
+        for (var n = 0; n <= step; n++) {
+          var x = -xRange + n * 2 * xRange / step;
+          var y = Math.pow(Math.abs(x), index);
+          if (x < 0 && index != 0) { // When x is negative:
+                                     // if the denominator is even, there is no real value; if the numerator and denominator are both odd numbers,
+                                     // and the y value is negative, the sign needs to be changed.
+            if (denominator % 2 == 0) continue;
+            else if (numerator % 2 != 0) y = -y;
+          }
+          xx = oX + x * scale;
+          yy = oY - y * scale;
+          if (yy >= margin && yy <= (h - margin)) {
+            if (first) {
+              first = false;
+              board.moveTo(xx, yy);
+              //console.log('moveTo ' + x + ',' + y + ',' + xx + ',' + yy);
+              oldX = x;
+            } else {
+              if (x - oldX > (2.5 * xRange / step)) { //Handling Discontinuities
+                board.moveTo(xx, yy);
+                //console.log('moveTo ' + xx + ',' + yy);
+              } else {
+                board.lineTo(xx, yy);
+                //console.log('lineTo ' + xx + ',' + yy);
+              }
+              oldX = x;
+            }
+          }
+        }
+        board.stroke();
+
+        // Draw text 'y = x^a'
+        board.font = '28px Times New Roman';
+        if (index == 0) board.fillStyle = '#F00';
+        else board.fillStyle = '#00C';
+        board.fillText('y = x', w - margin - 130, margin + 40);
+        board.font = '20px Times New Roman';
+        board.fillText(indexList[a], w - margin - 70, margin + 25);
+      }
+
+      function drawExponentialFunction(figCanvas, a) {
+        var margin = 10;
+        var w = $(figCanvas).get(0).width;
+        var h = $(figCanvas).get(0).height;
+        var xRange = 5;
+        var step = 50;
+        var oX = w / 2;
+        var oY = h - 30 - margin;
+        var scale = (w - 2 * margin) / (2 * xRange);
+
+        var board = $(figCanvas).get(0).getContext('2d');
+        board.lineWidth = 2;
+        if (a == 1) board.strokeStyle = '#F00';
+        else board.strokeStyle = '#000';
+        board.clearRect(0, 0, w, h);
+        board.beginPath();
+        drawAxis(board, w, h, margin, oX, oY);
+        var first = true;
+        for (var x = -1 * xRange; x <= xRange; x += (2 * xRange / step)) {
+          var y = Math.pow(a, x);
+
+          xx = oX + x * scale;
+          yy = oY - y * scale;
+          if (yy >= margin && yy <= (h - margin)) {
+            if (first) {
+              first = false;
+              board.moveTo(xx, yy);
+            } else {
+              board.lineTo(xx, yy);
+            }
+          }
+        }
+        board.stroke();
+
+        // Draw point(0, 1), all curves of exponential functions pass through this point
+        board.font = '22px Times New Roman';
+        board.fillStyle = '#00C';
+        board.fillText('1', oX + 5, oY - 20);
+        // Draw text 'y = a^x'
+        var aText = '' + Math.round(a * 10);
+        aText = aText.substring(0, aText.length - 1) + '.' + aText.substr( - 1);
+        if (aText[0] == '.') aText = '0' + aText;
+        board.font = '28px Times New Roman';
+        if (a == 1) board.fillStyle = '#F00';
+        else board.fillStyle = '#00C';
+        board.fillText('y = ' + aText, w - margin - 130, margin + 40);
+        if (aText.length > 3) board.fillText('x', w - margin - 30, margin + 25);
+        else board.fillText('x', w - margin - 45, margin + 25);
+      }
+
+      function drawLogarithmicFunction(figCanvas, a) {
+        var margin = 10;
+        var w = $(figCanvas).get(0).width;
+        var h = $(figCanvas).get(0).height;
+        var xRange = 10;
+        var step = 50;
+        var oX = 30 + margin;
+        var oY = h / 2;
+        var scale = (w - margin - oX) / xRange;
+
+        var board = $(figCanvas).get(0).getContext('2d');
+        board.lineWidth = 2;
+        if (a == 1) board.strokeStyle = '#F00';
+        else board.strokeStyle = '#000';
+        board.clearRect(0, 0, w, h);
+        board.beginPath();
+        drawAxis(board, w, h, margin, oX, oY);
+        if (a == 1) {
+          xx = oX + scale;
+
+          board.moveTo(xx, margin);
+          board.lineTo(xx, h - margin);
+          board.stroke();
+        } else {
+          var first = true;
+          var x = 0.01 * xRange;
+          var b = Math.pow(xRange / 0.01, 1 / step);
+          while (x <= xRange) {
+            var y = Math.log(x) / Math.log(a);
+
+            xx = oX + x * scale;
+            yy = oY - y * scale;
+            if (yy >= margin && yy <= (h - margin)) {
+              if (first) {
+                first = false;
+                board.moveTo(xx, yy);
+              } else {
+                board.lineTo(xx, yy);
+              }
+            }
+            x *= b; // Prepare next x value 
+          }
+          board.stroke();
+
+          // Draw point(1, 0), all curves of logarithmic functions pass through this point
+          board.font = '22px Times New Roman';
+          board.fillStyle = '#00C';
+          board.fillText('1', oX + 1 * scale, oY + 20);
+          // Draw text 'y = log'
+          var aText = '' + Math.round(a * 10);
+          aText = aText.substring(0, aText.length - 1) + '.' + aText.substr( - 1);
+          if (aText[0] == '.') aText = '0' + aText;
+          board.font = '28px Times New Roman';
+          board.fillText('y = log', w - margin - 130, margin + 40);
+          board.font = '20px Times New Roman';
+          board.fillText(aText, w - margin - 45, margin + 50);
+          board.font = '28px Times New Roman';
+          board.fillText('x', w - margin - 45, margin + 25);
+        }
+      }
+    </script>
+  </head>
+  
+  <body>
+    <h2>
+      Animation of power function, exponential function, logarithmic function
+    </h2>
+    <p>
+      Please drag the slider to change the parameters and see how the image
+      changes.
+    </p>
+    <div id="graph-view">
+      <div id="power-func-box" class="graph-box">
+        <div class="graph-ctrl">
+          <span>
+            <b>
+              Power function \(y = x^a\)
+            </b>
+            index:
+          </span>
+          <br>
+          <input class="easyui-slider" value="0" data-options="min:0,max:26,step:1,rule:[-5,'|',0,'|',5]">
+        </div>
+        <div>
+          <canvas width="400" height="300" style="border:1px solid black;">
+          </canvas>
+        </div>
+      </div>
+      <div id="exponential-func-box" class="graph-box">
+        <div class="graph-ctrl">
+          <span>
+            <b>
+              Exponential function \(y = a^x\)
+            </b>
+            base:
+          </span>
+          <br>
+          <input class="easyui-slider" value="0" data-options="min:0,max:100,step:1,rule:[0.1,'|',0.316,'|',1,'|',3.16,'|',10]">
+        </div>
+        <div>
+          <canvas width="400" height="300" style="border:1px solid black;">
+          </canvas>
+        </div>
+      </div>
+      <div id="logarithmic-func-box" class="graph-box">
+        <div class="graph-ctrl">
+          <span>
+            <b>
+              Logarithmic function \(y = log_a^x\)
+            </b>
+            base:
+          </span>
+          <br>
+          <input class="easyui-slider" value="0" data-options="min:0,max:100,step:1,rule:[0.1,'|',0.316,'|',1,'|',3.16,'|',10]">
+        </div>
+        <div>
+          <canvas width="400" height="300" style="border:1px solid black;">
+          </canvas>
+        </div>
+      </div>
+    </div>
+    <div id="debug">
+    </div>
+  </body>
+
+</html>
